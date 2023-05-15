@@ -7,7 +7,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 @SpringBootApplication
-// @ComponentScan(basePackages = {"com.yukon.app.sch"})
 public class SchApplication {
 
 	public static void main(String[] args) {
