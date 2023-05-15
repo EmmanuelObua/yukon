@@ -1,7 +1,7 @@
 package com.yukon.app.sch.model;
 
 import java.util.List;
-import javax.persistence.ElementCollection;
+// import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -18,8 +18,8 @@ public class Teacher {
 
     private String name;
 
-    @ElementCollection
-    private List<String> studentList;
+    // @ElementCollection
+    // private List<String> studentList;
 
     public Long getId() {
         return id;
@@ -37,12 +37,12 @@ public class Teacher {
         this.name = name;
     }
 
-    public List<String> getStudentList() {
-        return studentList;
-    }
+    // public List<String> getStudentList() {
+    //     return studentList;
+    // }
 
-    public void setStudentList(List<String> studentList) {
-        this.studentList = studentList;
-    }
+    // public void setStudentList(List<String> studentList) {
+    //     this.studentList = studentList;
+    // }
 
 }

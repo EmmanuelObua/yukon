@@ -18,6 +18,11 @@ public class Student {
 
     private String surname;
 
+    public Student(String name, String surname) {
+        this.name = name;
+        this.surname = surname;
+    }
+
     public Long getId() {
         return id;
     }
