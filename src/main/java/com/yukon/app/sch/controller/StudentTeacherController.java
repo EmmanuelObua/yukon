@@ -5,10 +5,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
-import package com.yukon.app.sch.model.Student;
-import package com.yukon.app.sch.model.Teacher;
-import package com.yukon.app.sch.repository.StudentRepository;
-import package com.yukon.app.sch.repository.TeacherRepository;
+import com.yukon.app.sch.model.Student;
+import com.yukon.app.sch.model.Teacher;
+import com.yukon.app.sch.repository.StudentRepository;
+import com.yukon.app.sch.repository.TeacherRepository;
 
 @RestController
 @RequestMapping("/api")
@@ -75,7 +75,7 @@ public class StudentTeacherController {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Teacher not found"));
 
         teacher.setName(teacherDetails.getName());
-        teacher.setStudentList(teacherDetails.getStudentList());
+        // teacher.setStudentList(teacherDetails.getStudentList());
 
         return teacherRepository.save(teacher);
     }
