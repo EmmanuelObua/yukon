@@ -3,6 +3,7 @@ package com.yukon.app.sch.controller;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import com.yukon.app.sch.model.Student;
@@ -23,8 +24,9 @@ public class StudentTeacherController {
     // GET requests
 
     @GetMapping("/students")
-    public List<Student> getAllStudents() {
-        return studentRepository.findAll();
+    public ResponseEntity<?> getAllStudents() {
+        List<Student> students = studentRepository.findAll();
+        return new ResponseEntity(students, HttpStatus.OK);
     }
 
     @GetMapping("/students/{id}")
