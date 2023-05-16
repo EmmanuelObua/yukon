@@ -1,6 +1,5 @@
 package com.yukon.app.sch.controller;
 
-import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -11,93 +10,159 @@ import com.yukon.app.sch.model.Teacher;
 import com.yukon.app.sch.repository.StudentRepository;
 import com.yukon.app.sch.repository.TeacherRepository;
 
+import java.util.List;
+import java.util.Optional;
+import java.util.ArrayList;
+
 @RestController
 @RequestMapping("/api")
 public class StudentTeacherController {
 
-    @Autowired
-    private StudentRepository studentRepository;
+	@Autowired
+	private StudentRepository studentRepository;
 
-    @Autowired
-    private TeacherRepository teacherRepository;
+	@Autowired
+	private TeacherRepository teacherRepository;
 
-    // GET requests
+	// GET requests
 
-    @GetMapping("/students")
-    public ResponseEntity<?> getAllStudents() {
-        List<Student> students = studentRepository.findAll();
-        return new ResponseEntity(students, HttpStatus.OK);
-    }
+	@GetMapping("/students")
+	public ResponseEntity<List<Student>> getAllStudents() {
+		List<Student> students = studentRepository.findAll();
+		if (students.isEmpty()) {
+			return ResponseEntity.noContent().build();
+		}
+		return ResponseEntity.ok(students);
+	}
 
-    @GetMapping("/students/{id}")
-    public Student getStudentById(@PathVariable(value = "id") Long studentId) {
-        return studentRepository.findById(studentId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Student not found"));
-    }
+	@GetMapping("/students/{id}")
+	public ResponseEntity<?> getStudentById(@PathVariable(value = "id") Long studentId) {
+		Optional<Student> student = studentRepository.findById(studentId);
+		
+		if(student.isPresent()) {
+			return ResponseEntity.ok(student.get());
+		}
+		
+		return ResponseEntity.noContent().build();
+	}
 
-    @GetMapping("/teachers")
-    public List<Teacher> getAllTeachers() {
-        return teacherRepository.findAll();
-    }
+	@GetMapping("/teachers")
+	public ResponseEntity<List>  getAllTeachers() {
+		List<Teacher> teachers = teacherRepository.findAll();
 
-    @GetMapping("/teachers/{id}")
-    public Teacher getTeacherById(@PathVariable(value = "id") Long teacherId) {
-        return teacherRepository.findById(teacherId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Teacher not found"));
-    }
+		if (teachers.isEmpty()) {
+			return ResponseEntity.noContent().build();
+		}
+		return ResponseEntity.ok(teachers);
+	}
 
-    // POST requests
+	@GetMapping("/teachers/{id}")
+	public ResponseEntity<?> getTeacherById(@PathVariable(value = "id") Long teacherId) {
+		Optional<Teacher> teacher = teacherRepository.findById(teacherId);
 
-    @PostMapping("/students")
-    public Student createStudent(@RequestBody Student student) {
-        return studentRepository.save(student);
-    }
+		if (teacher.isPresent()) {
+			return ResponseEntity.ok(teacher.get());
+		}
 
-    @PostMapping("/teachers")
-    public Teacher createTeacher(@RequestBody Teacher teacher) {
-        return teacherRepository.save(teacher);
-    }
+		return ResponseEntity.noContent().build();
+	}
 
-    // PUT requests
+	// POST requests
 
-    @PutMapping("/students/{id}")
-    public Student updateStudent(@PathVariable(value = "id") Long studentId, @RequestBody Student studentDetails) {
-        Student student = studentRepository.findById(studentId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Student not found"));
+	@PostMapping("/students")
+	public ResponseEntity<?> createStudent(@RequestBody Student student) {
+		Student savedStudent = studentRepository.save(student);
+		return ResponseEntity.ok().body(savedStudent);
+	}
 
-        student.setName(studentDetails.getName());
-        student.setSurname(studentDetails.getSurname());
+	@PostMapping("/teachers")
+	public ResponseEntity<Teacher> createTeacher(@RequestBody Teacher teacher) {
+		List<Student> students = new ArrayList<>();
+		if (teacher.getStudentIds() != null) {
+			for (Long studentId : teacher.getStudentIds()) {
+				Optional<Student> optionalStudent = studentRepository.findById(studentId);
+				if (optionalStudent.isPresent()) {
+					students.add(optionalStudent.get());
+				}
+			}
+		}
+		teacher.setStudents(students);
+		Teacher savedTeacher = teacherRepository.save(teacher);
 
-        return studentRepository.save(student);
-    }
+		for (Student student : students) {
+			student.setTeacher(savedTeacher);
+			studentRepository.save(student);
+		}
 
-    @PutMapping("/teachers/{id}")
-    public Teacher updateTeacher(@PathVariable(value = "id") Long teacherId, @RequestBody Teacher teacherDetails) {
-        Teacher teacher = teacherRepository.findById(teacherId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Teacher not found"));
+		return ResponseEntity.ok(savedTeacher);
+	}
 
-        teacher.setName(teacherDetails.getName());
-        // teacher.setStudentList(teacherDetails.getStudentList());
+	// PUT requests
 
-        return teacherRepository.save(teacher);
-    }
+	@PutMapping("/students/{id}")
+	public ResponseEntity<?> updateStudent(@PathVariable(value = "id") Long studentId, @RequestBody Student studentDetails) {
+		Student student = studentRepository.findById(studentId)
+		.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Student not found"));
 
-    // DELETE requests
+		student.setName(studentDetails.getName());
+		student.setSurname(studentDetails.getSurname());
 
-    @DeleteMapping("/students/{id}")
-    public void deleteStudent(@PathVariable(value = "id") Long studentId) {
-        Student student = studentRepository.findById(studentId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Student not found"));
+		Student updated = studentRepository.save(student);
 
-        studentRepository.delete(student);
-    }
+		return ResponseEntity.ok(updated);
+	}
 
-    @DeleteMapping("/teachers/{id}")
-    public void deleteTeacher(@PathVariable(value = "id") Long teacherId) {
-        Teacher teacher = teacherRepository.findById(teacherId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Teacher not found"));
+	@PutMapping("/teachers/{id}")
+	public ResponseEntity<Teacher> updateTeacher(@PathVariable Long id, @RequestBody Teacher teacher) {
+		Optional<Teacher> optionalTeacher = teacherRepository.findById(id);
+		if (optionalTeacher.isPresent()) {
+			List<Student> students = new ArrayList<>();
+			if (teacher.getStudentIds() != null) {
+				for (Long studentId : teacher.getStudentIds()) {
+					Optional<Student> optionalStudent = studentRepository.findById(studentId);
+					if (optionalStudent.isPresent()) {
+						students.add(optionalStudent.get());
+					}
+				}
+			}
+			Teacher existingTeacher = optionalTeacher.get();
+			existingTeacher.setName(teacher.getName());
+			existingTeacher.setSurname(teacher.getSurname());
+			existingTeacher.setStudents(students);
+			Teacher savedTeacher = teacherRepository.save(existingTeacher);
 
-        teacherRepository.delete(teacher);
-    }
+			for (Student student : students) {
+				student.setTeacher(savedTeacher);
+				studentRepository.save(student);
+			}
+
+			return ResponseEntity.ok(savedTeacher);
+		} else {
+			return ResponseEntity.notFound().build();
+		}
+	}
+
+	// DELETE requests
+
+	@DeleteMapping("/students/{id}")
+	public ResponseEntity<?> deleteStudent(@PathVariable(value = "id") Long studentId) {
+		Student student = studentRepository.findById(studentId)
+		.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Student not found"));
+
+		studentRepository.delete(student);
+
+		return ResponseEntity.ok().build();
+	}
+
+
+	@DeleteMapping("/teachers/{id}")
+	public ResponseEntity<?> deleteTeacher(@PathVariable(value = "id") Long teacherId) {
+		Teacher teacher = teacherRepository.findById(teacherId)
+		.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Teacher not found"));
+
+		teacherRepository.delete(teacher);
+
+		return ResponseEntity.ok().build();
+	}
 
 }
